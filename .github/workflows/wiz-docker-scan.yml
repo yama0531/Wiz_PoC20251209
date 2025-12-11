@@ -1,0 +1,29 @@
+
+name: "Wiz Docker Scan"
+on:
+  pull_request:  # PR作成時にスキャン実行
+
+jobs:
+  wiz-docker-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build . --tag local-image:latest
+
+      - name: Download Wiz CLI
+        run: |
+          curl -o wizcli https://downloads.wiz.io/wizcli/latest/wizcli-linux-amd64
+          chmod +x wizcli
+
+      - name: Authenticate to Wiz
+        run: ./wizcli auth --id "$WIZ_CLIENT_ID" --secret "$WIZ_CLIENT_SECRET"
+        env:
+          WIZ_CLIENT_ID: ${{ secrets.WIZ_CLIENT_ID }}
+          WIZ_CLIENT_SECRET: ${{ secrets.WIZ_CLIENT_SECRET }}
+
+      - name: Run Wiz Docker Scan
+        run: ./wizcli docker scan --image local-image:latest
